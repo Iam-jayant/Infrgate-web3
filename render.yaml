@@ -13,10 +13,7 @@ services:
           name: infrgate-db
           property: connectionString
       - key: REDIS_URL
-        fromService:
-          type: pserv
-          name: infrgate-redis
-          property: connectionString
+        value: redis://infrgate-redis:6379/0
       - key: GEMINI_API_KEY
         sync: false
       - key: ADMIN_API_KEY
@@ -43,10 +40,7 @@ services:
           name: infrgate-db
           property: connectionString
       - key: REDIS_URL
-        fromService:
-          type: pserv
-          name: infrgate-redis
-          property: connectionString
+        value: redis://infrgate-redis:6379/0
 
   # 3. Chain Listener (Background Service)
   - type: worker
@@ -57,10 +51,7 @@ services:
     plan: free
     envVars:
       - key: REDIS_URL
-        fromService:
-          type: pserv
-          name: infrgate-redis
-          property: connectionString
+        value: redis://infrgate-redis:6379/0
       - key: WEB3_PROVISION_SECRET
         fromService:
           type: web
