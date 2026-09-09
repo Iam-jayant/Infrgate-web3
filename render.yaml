@@ -1,0 +1,90 @@
+version: "1"
+
+services:
+  # 1. Gateway (FastAPI Web Service)
+  - type: web
+    name: infrgate-gateway
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: infrgate-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: pserv
+          name: infrgate-redis
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: BOTCHAIN_CONTRACT_ADDRESS
+        value: "0xd4Ec81e92cD14a60d0F497eEcC9aDF320f6C0D6b"
+      - key: WEB3_PROVISION_SECRET
+        generateValue: true
+      - key: BOTCHAIN_RPC_URL
+        value: https://rpc.botchain.ai
+      - key: USDT_CONTRACT_ADDRESS
+        value: 0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C
+
+  # 2. Celery Worker (Background Service)
+  - type: worker
+    name: infrgate-worker
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: python -m infrgate.worker
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: infrgate-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: pserv
+          name: infrgate-redis
+          property: connectionString
+
+  # 3. Chain Listener (Background Service)
+  - type: worker
+    name: infrgate-chain-listener
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: python -m infrgate.chain_listener
+    plan: free
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: pserv
+          name: infrgate-redis
+          property: connectionString
+      - key: WEB3_PROVISION_SECRET
+        fromService:
+          type: web
+          name: infrgate-gateway
+          envVarKey: WEB3_PROVISION_SECRET
+      - key: BOTCHAIN_CONTRACT_ADDRESS
+        fromService:
+          type: web
+          name: infrgate-gateway
+          envVarKey: BOTCHAIN_CONTRACT_ADDRESS
+      - key: BOTCHAIN_RPC_URL
+        value: https://rpc.botchain.ai
+
+  # 4. Redis (Private Service)
+  - type: pserv
+    name: infrgate-redis
+    env: docker
+    repo: https://github.com/render-examples/redis.git
+    branch: master
+    plan: free
+
+databases:
+  # 5. PostgreSQL
+  - name: infrgate-db
+    databaseName: infrgate
+    user: infrgate
+    plan: free
