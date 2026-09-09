@@ -1,81 +1,69 @@
 <div align="center">
   <h1>InfrGate</h1>
-  <p><strong>Intelligent inference control plane for Large Language Models.</strong></p>
+  <p><strong>Decentralized Inference Settlement Gateway on BOT Chain.</strong></p>
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
   [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
   [![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+  [![BOT Chain](https://img.shields.io/badge/BOT_Chain-Live-00ff88?style=flat)](https://botchain.ai)
   
   [Website & Demo](http://infrgate.vercel.app/) • [Documentation](#architecture) • [API Reference](#api-reference)
 </div>
 
 <br />
 
-**InfrGate** is a scalable, reliable API gateway and proxy for Large Language Models (LLMs) featuring robust tenant isolation, rate limiting, and observability. It acts as a drop-in replacement for OpenAI's SDK, instantly upgrading your application with enterprise-grade infrastructure.
+**InfrGate** is a scalable, decentralized API gateway that bridges autonomous AI agents on **BOT Chain** to Web2 inference providers (OpenAI, Anthropic, Gemini). Agents pay on-chain in BOT or USDT, and InfrGate provisions high-performance, metered, API keys for off-chain streaming inference.
 
 ---
 
-## Live Environments
+## The Web3 Pivot
 
-- **Landing Page & Overview:** [http://infrgate.vercel.app/](http://infrgate.vercel.app/)
-- **Live Gateway API (Backend):** `https://infrgate.onrender.com/v1/chat/completions`
-- **Demo Tenant API Key:** `365c7a7b.ZZVujqiq-gWiHWJWAcqxz8x8QrwiRi4rWOFr5DMVr1I`
+Autonomous AI agents hold crypto (BOT/USDT) but cannot directly pay Web2 providers for inference. **InfrGate acts as the bridge.** 
 
----
-
-## The Problem & Solution
-
-Applications integrating multiple LLM providers repeatedly solve the same infrastructure problems: API authentication and tenant isolation, provider selection and routing, failover, rate limits and spend caps, and usage accounting. 
-
-**InfrGate** centralizes those concerns behind a single OpenAI-compatible backend gateway. Client applications simply point their OpenAI SDKs to the InfrGate URL instead of `api.openai.com`, and instantly gain automatic failover, cost controls, and tenant isolation. 
+Agents pay for an on-chain subscription via our smart contracts on BOT Chain. An off-chain listener securely provisions API keys based on those cryptographic events, granting agents access to a unified inference proxy with tenant isolation, rate limiting, and dynamic routing.
 
 ## Architecture
 
-This project is built to scale out-of-the-box utilizing serverless & managed infrastructure:
+This project spans smart contracts, an event listener, and a high-performance Python gateway:
 
-- **Frontend Application:** A highly interactive, dark brutalist React application built with **Next.js** and deployed on **Vercel**.
-- **Unified Gateway (API):** Hosted on **Render** as a high-performance containerized Docker service built on **FastAPI**.
-- **Primary Database:** **Supabase** (Managed PostgreSQL) acts as the system of record. It securely stores tenant API keys, model configurations, and the durable token usage ledger.
-- **State & Rate Limiting:** **Upstash** (Serverless Redis) provides sub-millisecond ephemeral state for Token Bucket rate limiting and sliding-window circuit breakers.
-- **Provider Multiplexing:** Seamlessly routes between **Hugging Face** (via `router.huggingface.co`), **Google Gemini**, and **OpenAI**.
+- **Smart Contracts:** Solidity contracts (`InfrgateSubscription.sol`) deployed on BOT Chain Mainnet (Chain ID 677) handle USDT and BOT payments, emitting `Subscribed` events.
+- **Chain Listener:** A Python worker that securely polls `eth_getLogs`, decoding on-chain events and triggering internal provisioning webhooks.
+- **Unified Gateway (API):** A high-performance Docker service built on **FastAPI**. It routes OpenAI SDK requests to multiple upstream providers based on the agent's Web3 subscription tier and quota.
+- **Frontend Web3 dApp:** A Next.js frontend utilizing `wagmi` and `viem` to facilitate smooth wallet connection and on-chain checkout.
+- **Database & State:** PostgreSQL stores tenant data and the usage ledger, while Redis provides sub-millisecond ephemeral state for token bucket rate limiting.
 
 ### Flow Architecture
 
 ```mermaid
-graph TD
-    Client["Client Request (OpenAI SDK)"] --> API["InfrGate Gateway (FastAPI)"]
-    API --> Auth["Authentication & Tenant Isolation (Supabase)"]
-    Auth --> RateLimit["Rate Limiting & Policy Check (Upstash Redis)"]
-    RateLimit --> Router["Intelligent Routing Engine"]
-    Router --> Execute["Provider Execution (Timeout, Retry, Failover)"]
-    Execute --> Persist["Idempotent Usage Persistence"]
-    Persist --> Worker["Background Processing (SKIP LOCKED Queue on Postgres)"]
+sequenceDiagram
+    actor Agent as Autonomous Agent
+    participant Contract as BOT Chain Contract
+    participant Listener as Chain Listener
+    participant API as InfrGate Gateway
+    participant Provider as Web2 LLM Provider
+
+    Agent->>Contract: Pay USDT/BOT (subscribe)
+    Contract-->>Listener: Emit Subscribed Event
+    Listener->>API: POST /admin/web3/provision
+    API-->>Agent: Return API Key & Quota
     
-    style Client fill:#141414,stroke:#333,stroke-width:2px,color:#fff
-    style API fill:#ff5500,stroke:#333,stroke-width:2px,color:#fff
-    style Router fill:#1e1e1e,stroke:#333,stroke-width:2px,color:#fff
+    Agent->>API: Inference Request (OpenAI format)
+    API->>API: Verify Token Quota & Subscription
+    API->>Provider: Proxy Request
+    Provider-->>API: Stream Response
+    API-->>Agent: Stream Response
 ```
-
-## Engineering Highlights
-
-### Claim-First Idempotency and CAS Races
-Network retries often cause double-billing. The naive approach to idempotency fails under concurrency. InfrGate uses a claim-first model with tenant-scoped Composite Unique Constraints (`UNIQUE(tenant_id, idempotency_key)`). Before calling a provider, the gateway inserts a `pending` ledger row. If a concurrent duplicate arrives, a Compare-and-Swap (CAS) update reclaims abandoned leases using a 90-second lease window.
-
-### Resilient Async Cancellation
-During mid-flight provider execution, if a client disconnected or the server timed out, the resulting `asyncio.CancelledError` would skip standard exception blocks. By catching it explicitly and wrapping cleanup blocks in `anyio.CancelScope(shield=True)`, the gateway guarantees the usage ledger is always transitioned to a `partial` or `failed` state.
-
-### Sliding-Window Circuit Breakers
-Hardened with intelligent state transitions (`CLOSED` -> `OPEN` -> `HALF_OPEN`), ensuring that degraded upstream providers do not cause cascading failures within the gateway.
 
 ## Tech Stack
 
 | Component | Technology | Rationale |
 | :--- | :--- | :--- |
-| **Frontend** | Next.js, React, Tailwind | Best-in-class developer experience for interactive web apps. |
-| **Backend/Gateway** | Python 3.12, FastAPI | Async-first ecosystem, dominant in AI/ML stacks with native validation. |
-| **Database** | PostgreSQL (Supabase) | System of record for strict relational guarantees. |
-| **Message Queue**| Postgres `SKIP LOCKED` | Removes the need for Kafka/RabbitMQ while remaining transactionally sound. |
-| **Cache/State** | Redis (Upstash) | Fast ephemeral state for rate limits and circuit breakers. |
+| **Smart Contracts** | Solidity, Hardhat | OpenZeppelin standards for secure payment routing. |
+| **Frontend dApp** | Next.js, Wagmi, Viem | Best-in-class Web3 integration and checkout flow. |
+| **Backend/Gateway** | Python 3.12, FastAPI | Async-first ecosystem, dominant in AI/ML stacks. |
+| **Chain Listener** | Python `eth-abi`, `httpx` | Resilient, standalone worker tracking block cursors via Redis. |
+| **Database** | PostgreSQL | System of record for API keys, quotas, and idempotency tracking. |
+| **Cache/State** | Redis | Fast ephemeral state for rate limits and circuit breakers. |
 
 ## Getting Started (Local Development)
 

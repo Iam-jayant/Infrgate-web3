@@ -16,6 +16,7 @@ This directory contains the complete engineering specification for InfrGate acro
 | Building Phase 3 | `09` → `11` |
 | Building Phase 4 | `07` (routing section) |
 | Building Phase 5 | `12` → `13` |
+| Building Phase 6 (Web3) | `14` (Web3 Gateway pivot) |
 | Reviewing the API | [`02-api-design.md`](spec/02-api-design.md) |
 | Understanding the data model | [`03-data-model.md`](spec/03-data-model.md) |
 
@@ -38,6 +39,7 @@ This directory contains the complete engineering specification for InfrGate acro
 | 11 | [Background Worker](spec/11-background-worker.md) | Postgres job queue, webhook delivery, dead-letter | Phase 3 | ✅ Final |
 | 12 | [Observability](spec/12-observability.md) | Structured logging, health endpoints, metrics | Phase 1–5 | ✅ Final |
 | 13 | [Future Work](spec/13-future-work.md) | Deferred capabilities and rationale | — | ✅ Final |
+| 14 | Web3 Integration | Smart contracts, on-chain listener, BOT Chain integration | Phase 6 | ✅ Final |
 
 ---
 
@@ -52,6 +54,7 @@ Every section and table row uses phase annotations:
 - **`[Phase 3]`** — included in Phase 3 (Streaming + Async Processing)
 - **`[Phase 4]`** — included in Phase 4 (Intelligent Routing)
 - **`[Phase 5]`** — included in Phase 5 (Hardening & Production Evidence)
+- **`[Phase 6]`** — included in Phase 6 (Web3 Decentralized Pivot)
 
 ### Schema notation
 
