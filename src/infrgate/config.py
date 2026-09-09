@@ -47,6 +47,17 @@ class Settings(BaseSettings):
     DEFAULT_RPM: int = 60
     DEFAULT_TPM: int = 100_000
 
+    # ── BOT Chain / Web3 ──────────────────────────────────────────────────
+    BOTCHAIN_RPC_URL: str = "https://rpc.botchain.ai"
+    BOTCHAIN_WSS_URL: str = "wss://ws-rpc.botchain.ai"
+    BOTCHAIN_CHAIN_ID: int = 677
+    BOTCHAIN_CONTRACT_ADDRESS: str = ""
+    BOTCHAIN_USDT_ADDRESS: str = "0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C"
+    BOTCHAIN_LISTENER_POLL_INTERVAL: int = 5  # seconds between eth_getLogs polls
+    BOTCHAIN_START_BLOCK: int = 0  # block number to start scanning from
+    BOTCHAIN_CONFIRMATIONS: int = 3  # blocks to wait before processing events
+    WEB3_PROVISION_SECRET: str = ""  # shared secret for chain_listener → API auth
+
 
 # ── Plan defaults ─────────────────────────────────────────────────────────
 # Spec reference: 04-authentication-tenancy.md §5.1

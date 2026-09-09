@@ -52,3 +52,5 @@ from infrgate.db.models.usage_ledger import UsageLedger  # noqa: E402, F401
 from infrgate.db.models.provider_config import ProviderConfig  # noqa: E402, F401
 from infrgate.db.models.job import Job  # noqa: E402, F401
 from infrgate.db.models.webhook_delivery import WebhookDelivery  # noqa: E402, F401
+from infrgate.db.models.chain_event import ChainEvent  # noqa: E402, F401
+

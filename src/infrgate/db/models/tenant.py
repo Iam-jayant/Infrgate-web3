@@ -1,6 +1,9 @@
 """
 Tenant model — multi-tenant identity, plan, spend cap, and status.
 
+Supports both Web2 (admin-provisioned) and Web3 (on-chain subscription)
+tenants. Web3 columns are nullable to maintain backward compatibility.
+
 Spec reference: 03-data-model.md §3.1
 """
 
@@ -30,6 +33,25 @@ class Tenant(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         BigInteger, nullable=False, server_default="0"
     )
     config: Mapped[dict] = mapped_column(JSON().with_variant(JSONB, "postgresql"), nullable=False, server_default="{}")
+
+    # ── Web3 / BOT Chain columns ──────────────────────────────────────────
+    # All nullable so existing Web2 tenants are unaffected.
+    wallet_address: Mapped[str | None] = mapped_column(
+        String(42), nullable=True, unique=True, index=True,
+        comment="Checksummed EVM wallet address (0x + 40 hex chars)",
+    )
+    subscription_tx_hash: Mapped[str | None] = mapped_column(
+        String(66), nullable=True,
+        comment="On-chain tx hash that created/renewed this subscription",
+    )
+    subscription_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+        comment="When the current on-chain subscription period ends",
+    )
+    token_quota: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True,
+        comment="Total inference tokens allowed this billing period (from contract)",
+    )
 
     # ── Relationships ─────────────────────────────────────────────────────
     api_keys = relationship("ApiKey", back_populates="tenant", cascade="all, delete-orphan")
