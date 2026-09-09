@@ -94,19 +94,18 @@ export function ColophonSection() {
         <div className="col-span-1">
           <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Links</h4>
           <ul className="space-y-4">
+              <li>
+                <a
+                  href="/app"
+                  className="group inline-flex items-center gap-2 hover:text-foreground transition-colors duration-200"
+                >
+                  <span className="w-1 h-1 bg-accent/50 rounded-full group-hover:bg-accent transition-colors" />
+                  Dashboard
+                </a>
+              </li>
             <li>
               <a
-                href="https://infrgate.onrender.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-xs text-accent hover:text-foreground transition-colors duration-200 uppercase tracking-widest border border-accent/20 px-4 py-2"
-              >
-                Launch Live Demo
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://github.com/Iam-jayant/Infrgate"
+                href="https://github.com/Iam-jayant/Infrgate-web3.git"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200 uppercase tracking-widest mt-2 block"
@@ -124,7 +123,7 @@ export function ColophonSection() {
         className="mt-24 pt-8 border-t border-border/20 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-          © 2025 InfrGate. Open Source under MIT.
+          © 2026 InfrGate. Open Source under MIT.
         </p>
         <p className="font-mono text-[10px] text-muted-foreground">Built for Enterprise scale.</p>
       </div>

@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue } from "next/font/google"
 import { SmoothScroll } from "@/components/smooth-scroll"
+import { Web3Provider } from "@/components/web3-provider"
 import "./globals.css"
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -17,9 +18,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"], variable: "--font-bebas" })
 
 export const metadata: Metadata = {
-  title: "InfrGate — AI Gateway",
+  title: "InfrGate — Web3 AI Gateway",
   description:
-    "High-performance AI Gateway to multiplex and route traffic to LLM providers.",
+    "High-Availability Multi-Model AI Routing for BOT Chain Agents.",
 }
 
 export default function RootLayout({
@@ -33,7 +34,11 @@ export default function RootLayout({
         className={`${ibmPlexSans.variable} ${bebasNeue.variable} ${ibmPlexMono.variable} font-sans antialiased overflow-x-hidden`}
       >
         <div className="noise-overlay" aria-hidden="true" />
-        <SmoothScroll>{children}</SmoothScroll>
+        <SmoothScroll>
+          <Web3Provider>
+            {children}
+          </Web3Provider>
+        </SmoothScroll>
       </body>
     </html>
   )

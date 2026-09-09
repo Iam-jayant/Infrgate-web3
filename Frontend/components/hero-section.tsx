@@ -56,31 +56,39 @@ export function HeroSection() {
         </SplitFlapAudioProvider>
 
         <h2 className="font-[var(--font-bebas)] text-muted-foreground/60 text-[clamp(1rem,3vw,2rem)] mt-4 tracking-wide">
-          Intelligent Inference Control Plane
+          Decentralized Inference Settlement Gateway
         </h2>
+        
+        <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 border border-accent/30 bg-accent/5 text-accent font-mono text-[10px] uppercase tracking-widest">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+          Powered by BOT Chain
+        </div>
 
-        <p className="mt-12 max-w-md font-mono text-sm text-muted-foreground leading-relaxed">
-          Enterprise-grade AI Gateway. Route requests, enforce rate limits, and guarantee reliability across LLM providers with a unified API.
+        <p className="mt-8 max-w-md font-mono text-sm text-muted-foreground leading-relaxed">
+          High-Availability Multi-Model AI Routing for BOT Chain Agents. Guarantee reliability across LLM providers with zero-downtime failover, rate limit protection, and token spend caps.
         </p>
 
-        <div className="mt-16 flex items-center gap-8">
+        <div className="mt-16 flex flex-wrap items-center gap-6">
           <a
-            href="https://infrgate.onrender.com/"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/app"
             className="group inline-flex items-center gap-3 border border-foreground/20 px-6 py-3 font-mono text-xs uppercase tracking-widest text-foreground hover:border-accent hover:text-accent transition-all duration-200"
           >
-            <ScrambleTextOnHover text="View Demo" as="span" duration={0.6} />
+            <ScrambleTextOnHover text="Open Dashboard" as="span" duration={0.6} />
             <BitmapChevron className="transition-transform duration-[400ms] ease-in-out group-hover:rotate-45" />
           </a>
+
           <a
-            href="https://github.com/Iam-jayant/Infrgate"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200"
+            href="/demo"
+            className="group inline-flex items-center gap-3 border border-accent/30 bg-accent/5 px-6 py-3 font-mono text-xs uppercase tracking-widest text-accent hover:bg-accent/10 transition-all duration-200"
           >
-            GitHub Repository
+            <ScrambleTextOnHover text="Try Demo" as="span" duration={0.6} />
+            <BitmapChevron className="transition-transform duration-[400ms] ease-in-out group-hover:rotate-45" />
           </a>
+          
+          <div className="flex items-center gap-2 border border-border/50 bg-muted/20 px-4 py-3">
+            <span className="font-mono text-xs text-muted-foreground">$</span>
+            <code className="font-mono text-xs text-foreground">npm i @infrgate/botchain-sdk</code>
+          </div>
         </div>
       </div>
 
