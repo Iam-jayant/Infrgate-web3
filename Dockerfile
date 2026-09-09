@@ -11,8 +11,7 @@ COPY pyproject.toml ./
 COPY README.md ./
 COPY src/ src/
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir .
+RUN pip install --no-cache-dir .
 
 # Stage 2: Runtime
 FROM python:3.12-slim AS runtime
@@ -35,4 +34,7 @@ COPY alembic.ini ./
 # Switch to non-root user
 USER infrgate
 
+# By default, the image runs the FastAPI gateway.
+# For the background worker, override command in docker-compose: `python -m infrgate.worker`
+# For the chain listener, override command in docker-compose: `python -m infrgate.chain_listener`
 CMD ["sh", "-c", "alembic upgrade head && uvicorn infrgate.main:create_app --factory --host 0.0.0.0 --port ${PORT:-8000}"]

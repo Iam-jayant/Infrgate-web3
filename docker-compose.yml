@@ -43,6 +43,25 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  chain-listener:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m infrgate.chain_listener
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   postgres:
     image: postgres:16-alpine
     environment:
