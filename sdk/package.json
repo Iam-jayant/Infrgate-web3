@@ -1,0 +1,39 @@
+{
+    "name": "@infrgate/botchain-sdk",
+    "version": "1.0.1",
+    "description": "TypeScript SDK for Infrgate AI Gateway on BOT Chain",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+        "prepublishOnly": "npm run build"
+    },
+    "keywords": [
+        "ai",
+        "agents",
+        "botchain",
+        "llm-gateway",
+        "infrgate"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "tsup": "^8.0.2",
+        "typescript": "^5.4.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
