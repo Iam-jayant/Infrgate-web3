@@ -102,11 +102,40 @@ async def get_current_tenant(
         )
 
     if tenant.status != "active":
-        logger.warning("auth_failed", reason="tenant_suspended", tenant_id=str(tenant.id))
+        logger.warning(
+            "tenant_suspended",
+            tenant_id=str(tenant.id),
+        )
         raise HTTPException(
             status_code=403,
-            detail={"error": {"type": "tenant_suspended", "message": "Tenant account is suspended.", "code": 403}},
+            detail={
+                "error": {
+                    "type": "tenant_suspended",
+                    "message": "Tenant account is suspended.",
+                    "code": 403,
+                }
+            },
         )
+
+    # Check Web3 subscription expiry
+    if tenant.subscription_expires_at is not None:
+        from datetime import datetime, timezone
+        if datetime.now(timezone.utc) > tenant.subscription_expires_at:
+            logger.warning(
+                "web3_subscription_expired",
+                tenant_id=str(tenant.id),
+                expires_at=tenant.subscription_expires_at.isoformat(),
+            )
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error": {
+                        "type": "subscription_expired",
+                        "message": "Your BOT Chain subscription has expired. Please renew on-chain.",
+                        "code": 403,
+                    }
+                },
+            )
 
     request.state.tenant = tenant
     return tenant

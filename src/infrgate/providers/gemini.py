@@ -1,20 +1,20 @@
 """
-Gemini adapter — translates OpenAI-compatible requests to Google Gemini API.
+Gemini adapter — translates OpenAI-compatible requests to Google Gemini API
+using the new official google-genai SDK and Interactions API.
 
 Handles request/response format translation, model mapping, error
 classification, and token extraction from Gemini's native response.
-
-Spec reference: 06-provider-adapters.md §3
 """
 
 from __future__ import annotations
 
-import json
 import time
 from typing import AsyncIterator
 
 import httpx
 import structlog
+from google import genai
+from google.genai.errors import APIError
 
 from infrgate.exceptions import (
     ProviderAuthError,
@@ -27,31 +27,22 @@ from infrgate.schemas.streaming import StreamChunk
 
 logger = structlog.get_logger()
 
-_FINISH_REASON_MAP = {
-    "STOP": "stop",
-    "MAX_TOKENS": "length",
-    "SAFETY": "content_filter",
-    "RECITATION": "content_filter",
-    "OTHER": "stop",
-}
-
-
 class GeminiAdapter(ProviderAdapter):
-    """Provider adapter for Google Gemini (Generative Language API)."""
-
-    BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
+    """Provider adapter for Google Gemini via the Interactions API."""
 
     SUPPORTED_MODELS = [
-        "gemini-2.0-flash",
+        "gemini-3.7-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-pro-preview",
+        "gemini-3.6-flash",
         "gemini-2.5-flash",
         "gemini-2.5-pro",
-        "gemini-3.1-pro-preview",
-        "gemini-3.1-flash-lite-preview",
     ]
 
     def __init__(self, api_key: str, http_client: httpx.AsyncClient):
         self._api_key = api_key
-        self._client = http_client
+        # We instantiate the async client provided by google-genai
+        self._client = genai.Client(api_key=api_key, http_options={'api_version': 'v1beta'})
 
     @property
     def provider_name(self) -> str:
@@ -62,10 +53,8 @@ class GeminiAdapter(ProviderAdapter):
         return self.SUPPORTED_MODELS
 
     async def complete(self, request: ProviderRequest) -> ProviderResponse:
-        """Execute a non-streaming chat completion via Gemini."""
-        url = f"{self.BASE_URL}/models/{request.model}:generateContent"
-        body = self._translate_request(request)
-
+        """Execute a non-streaming chat completion via Gemini Interactions API."""
+        
         logger.info(
             "provider_call",
             provider="gemini",
@@ -73,17 +62,18 @@ class GeminiAdapter(ProviderAdapter):
             request_id=request.request_id,
         )
 
+        input_text = self._build_combined_input(request)
+        
         start = time.monotonic()
         try:
-            resp = await self._client.post(
-                url,
-                json=body,
-                params={"key": self._api_key},
-                timeout=60.0,
+            interaction = await self._client.aio.interactions.create(
+                model=request.model,
+                input=input_text,
+                stream=False
             )
-        except httpx.TimeoutException:
-            raise ProviderTimeoutError("gemini", 60.0)
-        except httpx.ConnectError as e:
+        except APIError as e:
+            self._handle_error(e, request.request_id)
+        except Exception as e:
             raise ProviderError(
                 message=f"Failed to connect to Gemini: {e}",
                 provider="gemini",
@@ -91,30 +81,47 @@ class GeminiAdapter(ProviderAdapter):
             )
 
         latency_ms = int((time.monotonic() - start) * 1000)
+        
+        output_text = interaction.output_text or ""
+        finish_reason = "stop"
+        
+        usage = interaction.usage if hasattr(interaction, "usage") and interaction.usage else None
+        
+        def get_usage(obj, attr_name):
+            if isinstance(obj, dict):
+                return obj.get(attr_name, 0)
+            return getattr(obj, attr_name, 0)
+            
+        prompt_tokens = get_usage(usage, "prompt_token_count") if usage else 0
+        completion_tokens = get_usage(usage, "response_token_count") if usage else 0
+        total_tokens = get_usage(usage, "total_token_count") if usage else 0
 
-        if resp.status_code != 200:
-            self._handle_error(resp, request.request_id)
-
-        data = resp.json()
-        response = self._translate_response(data, request.model, latency_ms)
+        response = ProviderResponse(
+            content=output_text,
+            model=request.model,
+            finish_reason=finish_reason,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            provider_latency_ms=latency_ms,
+            raw_response={"interaction_id": interaction.id if hasattr(interaction, "id") else None},
+        )
 
         logger.info(
             "provider_response",
             provider="gemini",
             model=request.model,
             latency_ms=latency_ms,
-            prompt_tokens=response.prompt_tokens,
-            completion_tokens=response.completion_tokens,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
             request_id=request.request_id,
         )
 
         return response
 
     async def stream(self, request: ProviderRequest) -> AsyncIterator[StreamChunk]:
-        """Execute a streaming chat completion via Gemini."""
-        url = f"{self.BASE_URL}/models/{request.model}:streamGenerateContent?alt=sse"
-        body = self._translate_request(request)
-
+        """Execute a streaming chat completion via Gemini Interactions API."""
+        
         logger.info(
             "provider_stream_started",
             provider="gemini",
@@ -122,195 +129,88 @@ class GeminiAdapter(ProviderAdapter):
             request_id=request.request_id,
         )
 
+        input_text = self._build_combined_input(request)
+
         try:
-            async with self._client.stream(
-                "POST",
-                url,
-                json=body,
-                params={"key": self._api_key},
-                timeout=60.0,
-            ) as resp:
-                if resp.status_code != 200:
-                    await resp.aread()
-                    self._handle_error(resp, request.request_id)
-
-                is_first = True
-
-                async for line in resp.aiter_lines():
-                    line = line.strip()
-                    if not line:
-                        continue
-                    if line.startswith("data: "):
-                        data_str = line[6:]
-                        try:
-                            data = json.loads(data_str)
-
-                            candidates = data.get("candidates", [])
-                            delta_role = "assistant" if is_first else None
+            stream = await self._client.aio.interactions.create(
+                model=request.model,
+                input=input_text,
+                stream=True
+            )
+            
+            is_first = True
+            
+            async for event in stream:
+                if event.event_type == "step.delta":
+                    if event.delta.type == "text":
+                        delta_role = "assistant" if is_first else None
+                        is_first = False
+                        
+                        yield StreamChunk(
+                            id=request.request_id,
+                            model=request.model,
+                            delta_role=delta_role,
+                            delta_content=event.delta.text,
+                            finish_reason=None,
+                            usage=None
+                        )
+                elif event.event_type == "interaction.completed":
+                    usage = None
+                    if hasattr(event.interaction, "usage") and event.interaction.usage:
+                        usage_obj = event.interaction.usage
+                        
+                        def get_usage(obj, attr_name):
+                            if isinstance(obj, dict):
+                                return obj.get(attr_name, 0)
+                            return getattr(obj, attr_name, 0)
                             
-                            delta_content = None
-                            finish_reason = None
+                        usage = {
+                            "prompt_tokens": get_usage(usage_obj, "prompt_token_count") or 0,
+                            "completion_tokens": get_usage(usage_obj, "response_token_count") or 0,
+                            "total_tokens": get_usage(usage_obj, "total_token_count") or 0,
+                        }
+                    
+                    yield StreamChunk(
+                        id=request.request_id,
+                        model=request.model,
+                        delta_role=None,
+                        delta_content=None,
+                        finish_reason="stop",
+                        usage=usage
+                    )
 
-                            if candidates:
-                                candidate = candidates[0]
-                                parts = candidate.get("content", {}).get("parts", [])
-                                if parts:
-                                    delta_content = parts[0].get("text")
-                                    is_first = False
-
-                                gemini_finish = candidate.get("finishReason")
-                                if gemini_finish:
-                                    finish_reason = _FINISH_REASON_MAP.get(gemini_finish, "stop")
-
-                            usage = None
-                            usage_meta = data.get("usageMetadata")
-                            if usage_meta:
-                                usage = {
-                                    "prompt_tokens": usage_meta.get("promptTokenCount", 0),
-                                    "completion_tokens": usage_meta.get("candidatesTokenCount", 0),
-                                    "total_tokens": usage_meta.get("totalTokenCount", 0),
-                                }
-
-                            yield StreamChunk(
-                                id=request.request_id,
-                                model=request.model,
-                                delta_role=delta_role,
-                                delta_content=delta_content,
-                                finish_reason=finish_reason,
-                                usage=usage
-                            )
-                        except json.JSONDecodeError:
-                            logger.warning(
-                                "provider_stream_parse_error",
-                                provider="gemini",
-                                line=line,
-                                request_id=request.request_id
-                            )
-
-        except httpx.TimeoutException:
-            raise ProviderTimeoutError("gemini", 60.0)
-        except httpx.ConnectError as e:
+        except APIError as e:
+            self._handle_error(e, request.request_id)
+        except Exception as e:
             raise ProviderError(
                 message=f"Failed to connect to Gemini: {e}",
                 provider="gemini",
                 retryable=True,
             )
 
-    def _translate_request(self, request: ProviderRequest) -> dict:
+    def _build_combined_input(self, request: ProviderRequest) -> str:
         """
-        Translate an OpenAI-compatible request to Gemini format.
-
-        Mapping:
-          - system messages → system_instruction.parts[].text
-          - user/assistant messages → contents[].parts[].text
-          - role "assistant" → role "model"
-          - temperature, max_tokens, top_p → generationConfig
+        Translate the stateless messages array into a single combined input string,
+        since the Interactions API uses stateful `previous_interaction_id`.
         """
-        system_parts = []
-        contents = []
-
+        combined = ""
         for msg in request.messages:
             role = msg.get("role", "user")
             content = msg.get("content", "")
-
+            
             if role == "system":
-                system_parts.append({"text": content})
+                combined += f"[SYSTEM INSTRUCTION]:\n{content}\n\n"
+            elif role == "assistant":
+                combined += f"[ASSISTANT]:\n{content}\n\n"
             else:
-                gemini_role = "model" if role == "assistant" else "user"
-                contents.append({
-                    "role": gemini_role,
-                    "parts": [{"text": content}],
-                })
+                combined += f"[USER]:\n{content}\n\n"
+        
+        return combined.strip()
 
-        body: dict = {"contents": contents}
-
-        if system_parts:
-            body["system_instruction"] = {"parts": system_parts}
-
-        generation_config: dict = {}
-        if request.temperature is not None:
-            generation_config["temperature"] = request.temperature
-        if request.max_tokens is not None:
-            generation_config["maxOutputTokens"] = request.max_tokens
-        if request.top_p is not None:
-            generation_config["topP"] = request.top_p
-        if request.stop:
-            stops = [request.stop] if isinstance(request.stop, str) else request.stop
-            generation_config["stopSequences"] = stops
-
-        if generation_config:
-            body["generationConfig"] = generation_config
-
-        return body
-
-    def _translate_response(
-        self,
-        data: dict,
-        model: str,
-        latency_ms: int,
-    ) -> ProviderResponse:
-        """
-        Translate a Gemini response to the OpenAI-compatible internal model.
-
-        Extracts content, finish reason, and usage metadata from the
-        Gemini response format.
-        """
-        candidates = data.get("candidates", [])
-        if not candidates:
-            raise ProviderError(
-                message="Gemini returned no candidates.",
-                provider="gemini",
-                retryable=False,
-                raw_response=data,
-            )
-
-        candidate = candidates[0]
-        content_obj = candidate.get("content", {})
-        parts = content_obj.get("parts", [])
-        content = parts[0].get("text", "") if parts else ""
-
-        gemini_finish = candidate.get("finishReason", "STOP")
-        finish_reason = _FINISH_REASON_MAP.get(gemini_finish, "stop")
-
-        if gemini_finish not in _FINISH_REASON_MAP:
-            logger.warning(
-                "unknown_finish_reason",
-                provider="gemini",
-                finish_reason=gemini_finish,
-            )
-
-        usage = data.get("usageMetadata", {})
-        prompt_tokens = usage.get("promptTokenCount", 0)
-        completion_tokens = usage.get("candidatesTokenCount", 0)
-        total_tokens = usage.get("totalTokenCount", 0)
-
-        return ProviderResponse(
-            content=content,
-            model=model,
-            finish_reason=finish_reason,
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_tokens=total_tokens,
-            provider_latency_ms=latency_ms,
-            raw_response=data,
-        )
-
-    def _handle_error(self, resp: httpx.Response, request_id: str) -> None:
-        """
-        Classify Gemini HTTP errors and raise appropriate exceptions.
-
-        Error classification per spec §3.5:
-          400 → non-retryable (bad request)
-          401/403 → auth error (non-retryable)
-          429 → rate limit (retryable)
-          500/503 → server error (retryable)
-        """
-        status = resp.status_code
-        try:
-            body = resp.json()
-            message = body.get("error", {}).get("message", resp.text)
-        except Exception:
-            message = resp.text
+    def _handle_error(self, exc: APIError, request_id: str) -> None:
+        """Classify Gemini SDK errors and raise appropriate exceptions."""
+        status = exc.code
+        message = exc.message
 
         logger.error(
             "provider_error",
