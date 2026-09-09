@@ -28,8 +28,7 @@ class ChainListener:
         self.contract_address = settings.BOTCHAIN_CONTRACT_ADDRESS
         
         # Determine internal webhook URL based on environment
-        # In docker-compose, the gateway is usually accessible at "http://gateway:8000"
-        self.webhook_url = "http://gateway:8000/admin/web3/provision"
+        self.webhook_url = settings.GATEWAY_WEBHOOK_URL
         
         self.client = httpx.AsyncClient(timeout=10.0)
         self.redis_key = "infrgate:chain_listener:last_block"

@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     BOTCHAIN_START_BLOCK: int = 0  # block number to start scanning from
     BOTCHAIN_CONFIRMATIONS: int = 3  # blocks to wait before processing events
     WEB3_PROVISION_SECRET: str = ""  # shared secret for chain_listener → API auth
+    GATEWAY_WEBHOOK_URL: str = "http://gateway:8000/admin/web3/provision"
 
 
 # ── Plan defaults ─────────────────────────────────────────────────────────
