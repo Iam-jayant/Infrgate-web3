@@ -1,5 +1,5 @@
 import { connectorsForWallets } from '@rainbow-me/rainbowkit';
-import { metaMaskWallet, injectedWallet, walletConnectWallet, coinbaseWallet } from '@rainbow-me/rainbowkit/wallets';
+import { metaMaskWallet, injectedWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets';
 import { defineChain } from 'viem';
 import { mainnet } from 'viem/chains';
 import { createConfig, http } from 'wagmi';
@@ -38,7 +38,7 @@ const connectors = connectorsForWallets(
   [
     {
       groupName: 'Recommended',
-      wallets: [metaMaskWallet, walletConnectWallet, coinbaseWallet, injectedWallet],
+      wallets: [metaMaskWallet, walletConnectWallet, injectedWallet],
     },
   ],
   {
