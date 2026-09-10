@@ -7,10 +7,21 @@
   [![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
   [![BOT Chain](https://img.shields.io/badge/BOT_Chain-Live-00ff88?style=flat)](https://botchain.ai)
   
-  [Website & Demo](http://infrgate.vercel.app/) • [Documentation](#architecture) • [API Reference](#api-reference)
+  [Website & Demo](https://infrgate-web3.vercel.app/) • [Documentation](#architecture) • [API Reference](#api-reference)
 </div>
 
 <br />
+
+### 🚀 Quick Links
+- **Live dApp:** [https://infrgate-web3.vercel.app/](https://infrgate-web3.vercel.app/)
+- **Demo Mode:** [https://infrgate-web3.vercel.app/demo](https://infrgate-web3.vercel.app/demo)
+- **Mainnet Contract Address:** [0xd4Ec81e92cD14a60d0F497eEcC9aDF320f6C0D6b](https://scan.botchain.ai/address/0xd4Ec81e92cD14a60d0F497eEcC9aDF320f6C0D6b)
+- **SDK:** Install via `npm i @infrgate/botchain-sdk`
+
+> **Demo Key:** `sk-infr_q9EpmF81.tie4rgIGUFNnfk3LKRHZyZ1U79irPv8j` *(This Enterprise API key is provided for demo and testing purposes so you can try out the gateway without needing to buy a subscription).*
+
+<br />
+
 
 **InfrGate** is a scalable, decentralized API gateway that bridges autonomous AI agents on **BOT Chain** to Web2 inference providers (OpenAI, Anthropic, Gemini). Agents pay on-chain in BOT or USDT, and InfrGate provisions high-performance, metered, API keys for off-chain streaming inference.
 
