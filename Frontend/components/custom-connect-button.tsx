@@ -1,42 +1,72 @@
 "use client"
 
-import { useConnect, useAccount, useDisconnect } from 'wagmi'
-import { injected } from 'wagmi/connectors'
-import { useState, useEffect } from 'react'
-import { botchainTestnet } from '@/lib/wagmi-config'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 
 export function CustomConnectButton() {
-  const { connect, isPending } = useConnect()
-  const { address, isConnected, chain } = useAccount()
-  const { disconnect } = useDisconnect()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return <div className="h-10 w-32 bg-accent/10 animate-pulse border border-border" />
-
-  if (isConnected) {
-    return (
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={() => disconnect()} 
-          className="border border-border/50 bg-background hover:bg-accent/10 font-mono text-xs uppercase tracking-widest px-6 py-3 transition-colors"
-        >
-          {address?.slice(0,6)}...{address?.slice(-4)} (Disconnect)
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <button 
-      onClick={() => connect({ connector: injected() })}
-      disabled={isPending}
-      className="bg-foreground text-background hover:opacity-90 font-mono text-xs uppercase tracking-widest px-6 py-3 transition-opacity"
-    >
-      {isPending ? 'Connecting...' : 'Connect MetaMask'}
-    </button>
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        authenticationStatus,
+        mounted,
+      }) => {
+        const ready = mounted && authenticationStatus !== 'loading'
+        const connected =
+          ready &&
+          account &&
+          chain &&
+          (!authenticationStatus ||
+            authenticationStatus === 'authenticated')
+
+        if (!ready) {
+          return (
+            <div
+              className="h-10 w-32 bg-accent/10 animate-pulse border border-border"
+              aria-hidden={true}
+            />
+          )
+        }
+
+        if (!connected) {
+          return (
+            <button
+              onClick={openConnectModal}
+              type="button"
+              className="bg-foreground text-background hover:opacity-90 font-mono text-xs uppercase tracking-widest px-6 py-3 transition-opacity"
+            >
+              Connect Wallet
+            </button>
+          )
+        }
+
+        if (chain.unsupported) {
+          return (
+            <button
+              onClick={openChainModal}
+              type="button"
+              className="bg-destructive text-destructive-foreground hover:opacity-90 font-mono text-xs uppercase tracking-widest px-6 py-3 transition-opacity"
+            >
+              Wrong network
+            </button>
+          )
+        }
+
+        return (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={openAccountModal}
+              type="button"
+              className="border border-border/50 bg-background hover:bg-accent/10 font-mono text-xs uppercase tracking-widest px-6 py-3 transition-colors"
+            >
+              {account.displayName}
+            </button>
+          </div>
+        )
+      }}
+    </ConnectButton.Custom>
   )
 }
