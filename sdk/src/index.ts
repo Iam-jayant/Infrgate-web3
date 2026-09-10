@@ -11,7 +11,7 @@ export class Infrgate {
 
     constructor(options: ClientOptions = {}) {
         this.apiKey = options.apiKey || process.env.INFRGATE_API_KEY || "";
-        this.baseURL = (options.baseURL || process.env.INFRGATE_BASE_URL || "https://api.infrgate.io/v1").replace(/\/+$/, "");
+        this.baseURL = (options.baseURL || process.env.INFRGATE_BASE_URL || "https://infrgate.onrender.com/v1").replace(/\/+$/, "");
         this.timeout = options.timeout || 60000;
 
         this.chat = new Chat(this);
