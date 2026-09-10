@@ -1,6 +1,6 @@
 {
     "name": "@infrgate/botchain-sdk",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "TypeScript SDK for Infrgate AI Gateway on BOT Chain",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
