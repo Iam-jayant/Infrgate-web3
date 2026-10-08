@@ -80,7 +80,7 @@ export function ColophonSection() {
       </div>
 
       {/* Simplified Footer Layout */}
-      <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-4xl">
+      <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-5xl">
 
         {/* About */}
         <div className="col-span-1 md:col-span-2">
@@ -90,6 +90,40 @@ export function ColophonSection() {
           </p>
         </div>
 
+        {/* Powered By */}
+        <div className="col-span-1">
+          <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Powered By</h4>
+          <div className="flex flex-col gap-5">
+            <div className="bg-white/5 rounded-lg p-3 inline-flex items-center justify-center w-fit border border-white/10 hover:border-accent/50 transition-colors duration-300 shadow-sm shadow-black/20">
+              <img src="/icon_title_logo.png" alt="BOT Chain" className="h-10 w-auto object-contain filter drop-shadow-md transition-transform hover:scale-105" />
+            </div>
+            <ul className="space-y-3 mt-1">
+              <li>
+                <a
+                  href="https://botchain.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-2 font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent/40 group-hover:bg-accent transition-colors"></span>
+                  BOT Chain Website
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://scan.botchain.ai/address/0xd4Ec81e92cD14a60d0F497eEcC9aDF320f6C0D6b"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-2 font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent/40 group-hover:bg-accent transition-colors"></span>
+                  Smart Contract
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
         {/* Links */}
         <div className="col-span-1">
           <h4 className="font-mono text-[9px] uppercase tracking-[0.3em] text-muted-foreground mb-4">Links</h4>
@@ -97,7 +131,7 @@ export function ColophonSection() {
               <li>
                 <a
                   href="/app"
-                  className="group inline-flex items-center gap-2 hover:text-foreground transition-colors duration-200"
+                  className="group inline-flex items-center gap-2 hover:text-foreground transition-colors duration-200 font-mono text-xs text-foreground/80"
                 >
                   <span className="w-1 h-1 bg-accent/50 rounded-full group-hover:bg-accent transition-colors" />
                   Dashboard
@@ -108,7 +142,7 @@ export function ColophonSection() {
                 href="https://github.com/Iam-jayant/Infrgate-web3.git"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200 uppercase tracking-widest mt-2 block"
+                className="font-mono text-xs text-foreground/80 hover:text-accent transition-colors duration-200 uppercase tracking-widest block"
               >
                 GitHub Repository
               </a>
