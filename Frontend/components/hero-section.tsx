@@ -59,10 +59,7 @@ export function HeroSection() {
           Decentralized Inference Settlement Gateway
         </h2>
         
-        <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 border border-accent/30 bg-accent/5 text-accent font-mono text-[10px] uppercase tracking-widest">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-          Powered by BOT Chain
-        </div>
+
 
         <p className="mt-8 max-w-md font-mono text-sm text-muted-foreground leading-relaxed">
           High-Availability Multi-Model AI Routing for BOT Chain Agents. Guarantee reliability across LLM providers with zero-downtime failover, rate limit protection, and token spend caps.
@@ -88,6 +85,20 @@ export function HeroSection() {
           <div className="flex items-center gap-2 border border-border/50 bg-muted/20 px-4 py-3">
             <span className="font-mono text-xs text-muted-foreground">$</span>
             <code className="font-mono text-xs text-foreground">npm i @infrgate/botchain-sdk</code>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 border border-border/50 bg-muted/10 px-4 py-2 hover:border-accent/30 transition-colors duration-300 shadow-sm shadow-black/10">
+            <a href="https://botchain.ai" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group border-b sm:border-b-0 sm:border-r border-border/50 pb-2 sm:pb-0 sm:pr-4">
+              <img src="/icon_title_logo.png" alt="BOT Chain" className="h-7 w-auto object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform" />
+              <div className="flex flex-col">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground group-hover:text-accent transition-colors">Powered by</span>
+                <span className="font-mono text-xs text-foreground group-hover:text-accent transition-colors">BOT Chain</span>
+              </div>
+            </a>
+            <a href="https://scan.botchain.ai/address/0xd4Ec81e92cD14a60d0F497eEcC9aDF320f6C0D6b" target="_blank" rel="noopener noreferrer" className="flex flex-col group sm:pl-2 pt-1 sm:pt-0">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground group-hover:text-accent transition-colors">Verified Contract</span>
+              <code className="font-mono text-[11px] text-foreground/80 group-hover:text-accent transition-colors">0xd4Ec81...C0D6b</code>
+            </a>
           </div>
         </div>
       </div>
