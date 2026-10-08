@@ -30,12 +30,24 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     """Resolve database URL from settings or alembic.ini."""
-    try:
-        from infrgate.config import get_settings
-
-        return get_settings().DATABASE_URL
-    except Exception:
-        return config.get_main_option("sqlalchemy.url", "")
+    import os
+    
+    # Check raw environment variable first
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        try:
+            from infrgate.config import get_settings
+            url = get_settings().DATABASE_URL
+        except Exception:
+            url = config.get_main_option("sqlalchemy.url", "")
+            
+    # Always ensure asyncpg is used for postgres
+    if url and url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url and url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        
+    return url
 
 
 def run_migrations_offline() -> None:
