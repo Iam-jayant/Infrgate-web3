@@ -9,9 +9,7 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: infrgate-db
-          property: connectionString
+        sync: false
       - key: REDIS_URL
         value: redis://infrgate-redis:6379/0
       - key: GEMINI_API_KEY
@@ -36,9 +34,10 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: infrgate-db
-          property: connectionString
+        fromService:
+          type: web
+          name: infrgate-gateway
+          envVarKey: DATABASE_URL
       - key: REDIS_URL
         value: redis://infrgate-redis:6379/0
 
@@ -71,11 +70,4 @@ services:
     env: docker
     repo: https://github.com/render-examples/redis.git
     branch: master
-    plan: free
-
-databases:
-  # 5. PostgreSQL
-  - name: infrgate-db
-    databaseName: infrgate
-    user: infrgate
     plan: free
